@@ -5,32 +5,44 @@ services:
     image: temporalio/auto-setup:1.22.3
     environment:
       - DB=postgresql
+      - DB_PORT=5432
       - POSTGRES_USER=temporal
       - POSTGRES_PWD=temporal
       - POSTGRES_SEEDS=temporal-postgres
+#      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml
     ports:
       - "7233:7233"
     depends_on:
       - temporal-postgres
+    networks:
+      - tmprl_net
 
   temporal-postgres:
     image: postgres:15
     environment:
-      - POSTGRES_PASSWORD=temporal
-      - POSTGRES_USER=temporal
-      - POSTGRES_DB=temporal
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_USER: temporal
     volumes:
       - temporal-db:/var/lib/postgresql/data
+    networks:
+      - tmprl_net
 
-  temporal-web:
-    image: temporalio/web:2.22.3
+  temporal-ui:
+    image: temporalio/ui:latest
     environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=*
+      - TEMPORAL_ADDRESS=temporal:7233        # адреса gRPC фронтенда Temporal
+      - TEMPORAL_UI_PORT=8080                 # внутрішній порт UI-сервера
+      - TEMPORAL_DEFAULT_NAMESPACE=default    # опціонально
+      # приклади ще корисних змінних:
+      # - TEMPORAL_UI_PUBLIC_PATH=/           # якщо треба сервити з підшляху
+      # - TEMPORAL_DISABLE_WRITE_ACTIONS=false
     ports:
-      - "8088:8088"
+      - "8088:8080"                           # відкриваємо UI на http://localhost:8088
     depends_on:
       - temporal
+    networks:
+      - tmprl_net
+
 
   gateway:
     build:
@@ -43,6 +55,8 @@ services:
       - "8080:8080"
     depends_on:
       - temporal
+    networks:
+      - tmprl_net
 
   python-worker:
     build:
@@ -54,7 +68,11 @@ services:
       - MAX_CONCURRENT_ACTIVITIES=1
     depends_on:
       - temporal
+    networks:
+      - tmprl_net
 
 volumes:
   temporal-db:
 
+networks:
+  tmprl_net:
