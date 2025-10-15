@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package llm;
+
+message LLMJobInput {
+  string user_id = 1;
+  string request_id = 2;
+  string model = 3;
+  string prompt = 4;
+  map<string, string> params = 5;
+}
+
+message LLMJobProgress {
+  int32 percent = 1;
+  string stage = 2;
+  string message = 3;
+}
+
+message LLMJobResult {
+  string output = 1;
+  map<string, string> meta = 2;
+}
+
