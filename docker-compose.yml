@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  temporal:
+    image: temporalio/auto-setup:1.22.3
+    environment:
+      - DB=postgresql
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=temporal-postgres
+    ports:
+      - "7233:7233"
+    depends_on:
+      - temporal-postgres
+
+  temporal-postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_PASSWORD=temporal
+      - POSTGRES_USER=temporal
+      - POSTGRES_DB=temporal
+    volumes:
+      - temporal-db:/var/lib/postgresql/data
+
+  temporal-web:
+    image: temporalio/web:2.22.3
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=*
+    ports:
+      - "8088:8088"
+    depends_on:
+      - temporal
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_NAMESPACE=default
+    ports:
+      - "8080:8080"
+    depends_on:
+      - temporal
+
+  python-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_NAMESPACE=default
+      - MAX_CONCURRENT_ACTIVITIES=1
+    depends_on:
+      - temporal
+
+volumes:
+  temporal-db:
+
