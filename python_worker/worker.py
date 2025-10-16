@@ -25,12 +25,12 @@ async def run_llm_on_gpu(input_payload: Dict[str, Any]) -> Dict[str, Any]:
         "stage": "initializing",
         "message": "warming up GPU",
     }
-    await activity.heartbeat(progress_payload)
+    activity.heartbeat(progress_payload)
 
     # Тут потрібно викликати реальну LLM inference.
     await asyncio.sleep(2)
 
-    await activity.heartbeat({
+    activity.heartbeat({
         "percent": 60,
         "stage": "generating",
         "message": "decoding tokens",
@@ -44,7 +44,7 @@ async def run_llm_on_gpu(input_payload: Dict[str, Any]) -> Dict[str, Any]:
 
     result_text = f"Generated text for {user_id}:{request_id} using {model}"
 
-    await activity.heartbeat({
+    activity.heartbeat({
         "percent": 100,
         "stage": "finalizing",
         "message": "writing outputs",
