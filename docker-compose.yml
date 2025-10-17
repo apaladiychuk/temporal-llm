@@ -43,8 +43,7 @@ services:
     networks:
       - tmprl_net
 
-
-  gateway:
+  gateway-api:
     build:
       context: .
       dockerfile: Dockerfile.gateway
@@ -53,6 +52,18 @@ services:
       - TEMPORAL_NAMESPACE=default
     ports:
       - "8080:8080"
+    depends_on:
+      - temporal
+    networks:
+      - tmprl_net
+
+  gateway-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_NAMESPACE=default
     depends_on:
       - temporal
     networks:

@@ -53,6 +53,14 @@ const (
 	SignalCancel = "Cancel"
 )
 
+// Імена workflow та task queue, що використовуються gateway та Temporal worker.
+const (
+	WorkflowTypeLLMJob   = "LLMJobWorkflow"
+	WorkflowTaskQueue    = "go-gateway-workflows"
+	GPUActivityTaskQueue = "llm-gpu-activities"
+	NotifyTaskQueue      = "notifications-activities"
+)
+
 // Helper для побудови deterministic workflowId.
 func WorkflowID(userID, requestID string) string {
 	return "llmjob-" + userID + "-" + requestID
