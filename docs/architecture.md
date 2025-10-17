@@ -7,7 +7,8 @@
 | Компонент | Мова | Призначення |
 |-----------|------|-------------|
 | Temporal Server | - | Оркестрація workflow та activity. |
-| Go Gateway Service | Go | REST API для UI, запуск Workflow, worker для orchestration та notifications. |
+| Go Gateway API | Go | REST API для UI, стартує workflow у Temporal. |
+| Go Temporal Worker | Go | Виконує workflow `LLMJobWorkflow` і activity `NotifyUI`. |
 | Python GPU Worker | Python | Виконує довгі GPU-активності (LLM inference). |
 | UI | будь-яка | Надсилає запити, отримує нотифікації, опитує статус. |
 
@@ -20,10 +21,10 @@
 
 ## Потік подій
 
-1. UI відправляє `POST /jobs` у Go gateway. Payload включає бізнес-ключ `user_id` + `request_id`, модель, prompt та параметри.
-2. Gateway створює workflow `LLMJobWorkflow` зі `workflowId = llmjob-<user>-<request>` (ідемпотентність).
-3. Workflow викликає activity `RunLLMOnGPU` у task queue `llm-gpu-activities`. Python worker heartbeat-ить прогрес.
-4. Після успішного завершення workflow викликає activity `NotifyUI`, яка пушить повідомлення у UI hub/webhook.
+1. UI відправляє `POST /jobs` у Go gateway API. Payload включає бізнес-ключ `user_id` + `request_id`, модель, prompt та параметри.
+2. Gateway API створює workflow `LLMJobWorkflow` зі `workflowId = llmjob-<user>-<request>` (ідемпотентність).
+3. Go Temporal worker виконує workflow, який викликає activity `RunLLMOnGPU` у task queue `llm-gpu-activities`. Python worker heartbeat-ить прогрес.
+4. Після успішного завершення workflow викликає activity `NotifyUI`, яку також виконує Go Temporal worker, та пушить повідомлення у UI hub/webhook.
 5. UI може викликати Temporal Query `GetStatus` через REST `GET /jobs/{workflowId}/status` або Signal `Cancel` через `POST /jobs/{workflowId}/cancel`.
 
 ## Контракти даних
