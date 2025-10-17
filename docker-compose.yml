@@ -11,7 +11,7 @@ services:
       - POSTGRES_SEEDS=temporal-postgres
 #      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml
     ports:
-      - "7233:7233"
+      - "8233:7233"
     depends_on:
       - temporal-postgres
     networks:
@@ -30,7 +30,7 @@ services:
   temporal-ui:
     image: temporalio/ui:latest
     environment:
-      - TEMPORAL_ADDRESS=temporal:7233        # адреса gRPC фронтенда Temporal
+      - TEMPORAL_ADDRESS=itap-cloud.com:8233       # адреса gRPC фронтенда Temporal
       - TEMPORAL_UI_PORT=8080                 # внутрішній порт UI-сервера
       - TEMPORAL_DEFAULT_NAMESPACE=default    # опціонально
       # приклади ще корисних змінних:
@@ -74,7 +74,7 @@ services:
       context: .
       dockerfile: Dockerfile.python
     environment:
-      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_ADDRESS=itap-cloud.com:8233
       - TEMPORAL_NAMESPACE=default
       - MAX_CONCURRENT_ACTIVITIES=1
     depends_on:
