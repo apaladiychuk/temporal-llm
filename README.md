@@ -1,11 +1,12 @@
 # Temporal LLM Reference Stack
 
-Репозиторій показує, як зібрати пайплайн для запуску LLM inference через Temporal із чотирма сервісами:
+Репозиторій показує, як зібрати пайплайн для запуску LLM inference через Temporal із п'ятьма сервісами:
 
 1. **Go gateway API** — REST API для UI, стартує Temporal workflow.
-2. **Go Temporal worker** — виконує workflow `LLMJobWorkflow` та activity `NotifyUI`.
-3. **Python GPU worker** — довгі GPU-активності.
-4. **Temporal server** — оркестрація workflow/activities.
+2. **Go Temporal workflow worker** — виконує workflow `LLMJobWorkflow`.
+3. **Go notifications worker** — виконує activity `NotifyUI` і пушить оновлення у зовнішні канали.
+4. **Python GPU worker** — довгі GPU-активності.
+5. **Temporal server** — оркестрація workflow/activities.
 
 ## Швидкий старт
 
@@ -13,7 +14,7 @@
 docker compose up --build
 ```
 
-Команда підніме Temporal (`temporalio/auto-setup`), Temporal Web UI, Go gateway API (порт `8080`), Go Temporal worker та Python worker.
+Команда підніме Temporal (`temporalio/auto-setup`), Temporal Web UI, Go gateway API (порт `8080`), окремі Go Temporal worker-и для workflow та нотифікацій і Python worker.
 
 Після запуску можна:
 
@@ -50,6 +51,7 @@ Go код використовує модуль `github.com/example/temporal-llm
 ```bash
 go run ./cmd/gateway
 go run ./cmd/gateway-worker
+go run ./cmd/notifications-worker
 ```
 
 Python worker:
@@ -64,7 +66,7 @@ python worker.py
 
 - `gateway-api` будується з `cmd/gateway`.
 - `gateway-worker` будується з `cmd/gateway-worker`.
+- `notifications-worker` будується з `cmd/notifications-worker`.
 - `python-worker` будується з `python_worker`.
 
 Docker Compose файли налаштовані для локального дев-середовища та не призначені для продакшн без доопрацювань (mTLS, secrets, observability).
-

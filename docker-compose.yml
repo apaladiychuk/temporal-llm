@@ -61,9 +61,26 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.worker
+      args:
+        BIN_PATH: ./cmd/gateway-worker
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_NAMESPACE=default
+    depends_on:
+      - temporal
+    networks:
+      - tmprl_net
+
+  notifications-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+      args:
+        BIN_PATH: ./cmd/notifications-worker
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_NAMESPACE=default
+      - NOTIFICATIONS_WEBHOOK_URL=${NOTIFICATIONS_WEBHOOK_URL:-}
     depends_on:
       - temporal
     networks:
