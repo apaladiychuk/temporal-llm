@@ -10,7 +10,6 @@ import (
 	"go.temporal.io/sdk/client"
 
 	"github.com/example/temporal-llm/internal/contracts"
-	"github.com/example/temporal-llm/internal/workflows"
 )
 
 type Server struct {
@@ -40,11 +39,11 @@ func (s *Server) handleStartJob(w http.ResponseWriter, r *http.Request) {
 	workflowID := contracts.WorkflowID(input.UserID, input.RequestID)
 	options := client.StartWorkflowOptions{
 		ID:                       workflowID,
-		TaskQueue:                workflows.WorkflowTaskQueue(),
+		TaskQueue:                contracts.WorkflowTaskQueue,
 		WorkflowExecutionTimeout: 8 * time.Hour,
 	}
 
-	we, err := s.temporalClient.ExecuteWorkflow(ctx, options, workflows.LLMJobWorkflow, input)
+	we, err := s.temporalClient.ExecuteWorkflow(ctx, options, contracts.WorkflowTypeLLMJob, input)
 	if err != nil {
 		log.Printf("failed to start workflow: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

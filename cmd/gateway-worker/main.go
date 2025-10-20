@@ -8,8 +8,10 @@ import (
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
+	"go.temporal.io/sdk/workflow"
 
 	"github.com/example/temporal-llm/internal/activities"
+	"github.com/example/temporal-llm/internal/contracts"
 	"github.com/example/temporal-llm/internal/workflows"
 )
 
@@ -26,9 +28,12 @@ func main() {
 	defer c.Close()
 
 	workflowWorker := worker.New(c, workflows.WorkflowTaskQueue(), worker.Options{})
-	workflowWorker.RegisterWorkflow(workflows.LLMJobWorkflow)
+	workflowWorker.RegisterWorkflowWithOptions(
+		workflows.LLMJobWorkflow,
+		workflow.RegisterOptions{Name: contracts.WorkflowTypeLLMJob},
+	)
 
-	notifyWorker := worker.New(c, workflows.NotifyTaskQueue(), worker.Options{})
+	notifyWorker := worker.New(c, contracts.NotifyTaskQueue, worker.Options{})
 	notifyWorker.RegisterActivity(activities.NotifyUI)
 
 	errCh := make(chan error, 2)

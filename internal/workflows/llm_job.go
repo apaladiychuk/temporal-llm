@@ -10,12 +10,6 @@ import (
 	"github.com/example/temporal-llm/internal/contracts"
 )
 
-const (
-	workflowTaskQueue    = "go-gateway-workflows"
-	gpuActivityTaskQueue = "llm-gpu-activities"
-	notifyTaskQueue      = "notifications-activities"
-)
-
 // StatusState містить mutable state workflow та використовується у Query handler.
 type StatusState struct {
 	contracts.JobStatus
@@ -58,7 +52,7 @@ func LLMJobWorkflow(ctx workflow.Context, input contracts.JobInput) (*contracts.
 			BackoffCoefficient: 2.0,
 			MaximumAttempts:    3,
 		},
-		TaskQueue: gpuActivityTaskQueue,
+		TaskQueue: contracts.GPUActivityTaskQueue,
 	}
 	actCtx := workflow.WithActivityOptions(ctx, activityOpts)
 
@@ -88,7 +82,7 @@ func LLMJobWorkflow(ctx workflow.Context, input contracts.JobInput) (*contracts.
 		RetryPolicy: &temporal.RetryPolicy{
 			MaximumAttempts: 1,
 		},
-		TaskQueue: notifyTaskQueue,
+		TaskQueue: contracts.NotifyTaskQueue,
 	}
 	notifyCtx := workflow.WithActivityOptions(ctx, notifyOpts)
 	notifyPayload := activities.NotificationPayload{}
@@ -105,7 +99,7 @@ func LLMJobWorkflow(ctx workflow.Context, input contracts.JobInput) (*contracts.
 }
 
 // WorkflowTaskQueue повертає queue.
-func WorkflowTaskQueue() string { return workflowTaskQueue }
+func WorkflowTaskQueue() string { return contracts.WorkflowTaskQueue }
 
 // NotifyTaskQueue повертає queue для нотифікацій.
-func NotifyTaskQueue() string { return notifyTaskQueue }
+func NotifyTaskQueue() string { return contracts.NotifyTaskQueue }
