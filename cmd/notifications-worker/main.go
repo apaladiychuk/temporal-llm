@@ -8,11 +8,9 @@ import (
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
-	"go.temporal.io/sdk/workflow"
 
 	"github.com/example/temporal-llm/internal/activities"
 	"github.com/example/temporal-llm/internal/contracts"
-	"github.com/example/temporal-llm/internal/workflows"
 )
 
 func main() {
@@ -27,40 +25,29 @@ func main() {
 	}
 	defer c.Close()
 
-	workflowWorker := worker.New(c, workflows.WorkflowTaskQueue(), worker.Options{})
-	workflowWorker.RegisterWorkflowWithOptions(
-		workflows.LLMJobWorkflow,
-		workflow.RegisterOptions{Name: contracts.WorkflowTypeLLMJob},
-	)
+	notifyWorker := worker.New(c, contracts.NotifyTaskQueue, worker.Options{})
+	notifyWorker.RegisterActivity(activities.NotifyUI)
 
 	errCh := make(chan error, 1)
-
-	go func() {
-		errCh <- workflowWorker.Run(worker.InterruptCh())
-	}()
 
 	go func() {
 		errCh <- notifyWorker.Run(worker.InterruptCh())
 	}()
 
-	remaining := 2
-
 	select {
 	case err := <-errCh:
-		remaining--
 		if err != nil {
-			log.Fatalf("temporal workflow worker exited with error: %v", err)
+			log.Fatalf("notification worker exited with error: %v", err)
 		}
-		log.Println("temporal workflow worker stopped")
+		log.Println("notification worker stopped")
 	case sig := <-sigCh:
-		log.Printf("received signal %s, shutting down workflow worker", sig)
+		log.Printf("received signal %s, shutting down notification worker", sig)
 	}
 
-	workflowWorker.Stop()
 	notifyWorker.Stop()
 
 	if err := <-errCh; err != nil {
-		log.Printf("workflow worker exit error: %v", err)
+		log.Printf("notification worker exit error: %v", err)
 	}
 }
 

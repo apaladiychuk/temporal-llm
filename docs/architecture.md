@@ -8,7 +8,8 @@
 |-----------|------|-------------|
 | Temporal Server | - | Оркестрація workflow та activity. |
 | Go Gateway API | Go | REST API для UI, стартує workflow у Temporal. |
-| Go Temporal Worker | Go | Виконує workflow `LLMJobWorkflow` і activity `NotifyUI`. |
+| Go Workflow Worker | Go | Виконує workflow `LLMJobWorkflow`. |
+| Go Notifications Worker | Go | Виконує activity `NotifyUI` і надсилає події у зовнішні системи. |
 | Python GPU Worker | Python | Виконує довгі GPU-активності (LLM inference). |
 | UI | будь-яка | Надсилає запити, отримує нотифікації, опитує статус. |
 
@@ -17,14 +18,14 @@
 - Namespace: `prod` (або `dev` на staging).
 - Workflow Task Queue: `go-gateway-workflows` — воркер у Go виконує workflow `LLMJobWorkflow`.
 - GPU Activity Task Queue: `llm-gpu-activities` — Python worker на GPU хості виконує activity `RunLLMOnGPU`.
-- Notification Activity Task Queue: `notifications-activities` — Go worker пушить подію в UI (webhook/WS/Kafka).
+- Notification Activity Task Queue: `notifications-activities` — окремий Go worker пушить подію в UI (webhook/WS/Kafka).
 
 ## Потік подій
 
 1. UI відправляє `POST /jobs` у Go gateway API. Payload включає бізнес-ключ `user_id` + `request_id`, модель, prompt та параметри.
 2. Gateway API створює workflow `LLMJobWorkflow` зі `workflowId = llmjob-<user>-<request>` (ідемпотентність).
-3. Go Temporal worker виконує workflow, який викликає activity `RunLLMOnGPU` у task queue `llm-gpu-activities`. Python worker heartbeat-ить прогрес.
-4. Після успішного завершення workflow викликає activity `NotifyUI`, яку також виконує Go Temporal worker, та пушить повідомлення у UI hub/webhook.
+3. Go workflow worker виконує workflow, який викликає activity `RunLLMOnGPU` у task queue `llm-gpu-activities`. Python worker heartbeat-ить прогрес.
+4. Після успішного завершення workflow викликає activity `NotifyUI`, яку виконує окремий notifications worker, та пушить повідомлення у UI hub/webhook.
 5. UI може викликати Temporal Query `GetStatus` через REST `GET /jobs/{workflowId}/status` або Signal `Cancel` через `POST /jobs/{workflowId}/cancel`.
 
 ## Контракти даних
@@ -70,4 +71,3 @@ Notification worker може виконати webhook, WS broadcast або пу�
 - Heartbeat прогрес доступний в Temporal Web UI.
 - Метрики/логи варто скеровувати у Prometheus/Grafana або Loki.
 - Додаткові Search Attributes: `UserID`, `RequestID`, `Model`, `ProjectId`, `LatencyMs` — додаються через Temporal CLI.
-
